@@ -7,6 +7,9 @@ import com.springBootproject.MyBankingApp.repository.AccountRepository;
 import com.springBootproject.MyBankingApp.service.AccountService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class AccountServiceImpl implements AccountService {
     private AccountRepository accountRepository;
@@ -25,9 +28,37 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountDto getAccountById(Long id) {
-       Account account= accountRepository.findById(id).orElseThrow(() -> new RuntimeException("Account doesnot exist"));
+        Account account= accountRepository.findById(id).orElseThrow(() -> new RuntimeException("Account doesnot exist"));
         return AccountMapper.mapToAccountDto(account);
     }
 
+    @Override
+    public AccountDto deposit(Long id, double amount) {
+        Account account= accountRepository.findById(id).orElseThrow(() -> new RuntimeException("Account doesnot exist"));
+       double total=account.getBalance()+ amount;
+       account.setBalance(total);
+       Account savedAccount=accountRepository.save(account);
+        return AccountMapper.mapToAccountDto(savedAccount);
+    }
+
+    @Override
+    public AccountDto withdraw(Long id, double amount) {
+        Account account = accountRepository.findById(id).orElseThrow(() -> new RuntimeException("Account doesnot exist"));
+        if (account.getBalance() < amount) {
+            throw new RuntimeException("Insufficent Balance");
+        }
+        double total = account.getBalance() + amount;
+        account.setBalance(total);
+
+        Account savedAccount = accountRepository.save(account);
+        return AccountMapper.mapToAccountDto(savedAccount);
+    }
+
+    @Override
+    public List<AccountDto> getAllAccounts() {
+        List<Account>accounts=accountRepository.findAll();
+        return accounts.stream().map((account)->AccountMapper.mapToAccountDto(account)).collect(Collectors.toList());
+
+    }
 
 }
